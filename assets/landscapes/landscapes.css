@@ -144,7 +144,7 @@ body[data-scene="topography"] .hero-link { background:#354c41; border-color:#354
 body[data-scene="topography"] .name-period { color:#789282; }
 body[data-scene="topography"] section::before { background:linear-gradient(90deg,#f2f3eb00,#f2f3ebed 10%,#f2f3ebed 65%,#f2f3eb00); }
 body[data-scene="topography"] .portrait-caption { background:#edf0e6db; color:#435d4b; }
-body[data-scene="topography"] .portrait-rings { border-color:#f4f6eff2; }
+body[data-scene="topography"] .portrait-rings { border-color:#f4f6eff2; background:transparent; }
 @media (max-width:600px) {
   .landscape-controls { right:12px; bottom:12px; gap:2px; }
   .scene-choice { padding:8px 10px; font-size:10px; gap:6px; }
