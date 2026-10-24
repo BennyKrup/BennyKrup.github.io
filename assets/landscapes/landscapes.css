@@ -18,7 +18,7 @@ body[data-scene="topography"] { --ink:#283b36; --paper:#efefe8; --accent:#456b5a
 body[data-scene="topography"] .landscape-backdrop { background:#e6e8df; }
 #landscape-canvas { display:block; width:100%; height:100%; }
 .reading-light { position:fixed; inset:0; z-index:-2; pointer-events:none; background:linear-gradient(90deg,#f3ecdfa8,#f3ecdfed 17%,#f3ecdfe8 45%,#f3ecdf22 72%,#f3ecdf00); }
-body[data-scene="topography"] .reading-light { background:linear-gradient(90deg,#f3f3edb3,#f3f3edf2 15%,#f3f3ede8 45%,#f3f3ed11 75%); }
+body[data-scene="topography"] .reading-light { background:linear-gradient(90deg,#eff1e6a3,#eff1e6d1 20%,#eff1e6b8 43%,#eff1e622 72%,#eff1e600); }
 .skip-link { position: fixed; top: -100px; left: 16px; z-index: 200; background: #fff; padding: .6rem 1rem; }
 .skip-link:focus { top: 12px; }
 nav { position: fixed; top: 0; width: 100%; z-index: 100; background: rgba(244,239,229,.88); border-bottom: 1px solid var(--rule); backdrop-filter: blur(18px); }
@@ -150,5 +150,5 @@ body[data-scene="topography"] .portrait-rings { border-color:#f4f6eff2; }
   .scene-choice { padding:8px 10px; font-size:10px; gap:6px; }
   .motion-toggle { padding:8px 10px; }
   .reading-light { background:linear-gradient(90deg,#f3ecdfd9,#f3ecdfe8 50%,#f3ecdf88); }
-  body[data-scene="topography"] .reading-light { background:linear-gradient(90deg,#f3f3edd9,#f3f3ede8 50%,#f3f3ed88); }
+  body[data-scene="topography"] .reading-light { background:linear-gradient(90deg,#eff1e6cf,#eff1e6d1 50%,#eff1e680); }
 }
