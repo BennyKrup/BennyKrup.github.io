@@ -10,8 +10,9 @@
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
   let paused = reduced.matches, gl, program, ready = false;
   let width = innerWidth, height = innerHeight, frame = 0, last = 0;
-  let time = scene === 'sand' ? 34 : 15, count = 6, generation = -1;
-  let vertexBuffer, terrainData;
+  let time = scene === 'sand' ? 34 : 15;
+  let terrains = [];
+  const terrainAttributes = {};
   const uniforms = {};
   function shader(type, source) {
     const s = gl.createShader(type); gl.shaderSource(s, source); gl.compileShader(s);
@@ -102,8 +103,8 @@
     gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,image);
     gl.uniform1i(gl.getUniformLocation(program,'sand'),0);
   }
-  function buildTerrain(seed) {
-    const n=54, vertices=[], points=[];
+  function buildTerrain(terrain, seed) {
+    const n=terrain.detail, vertices=[], points=[];
     const random=(x,z)=>{const v=Math.sin(x*127.1+z*311.7+seed*48.2)*43758.5453;return v-Math.floor(v)};
     function elevation(x,z) {
       const peaks=[[-.46,-.24,.86,.055],[.52,.20,.66,.095],[-.13,.18,.45,.10],[.21,-.52,.53,.055],[-.72,.48,.30,.06],[.74,-.48,.32,.045]];
@@ -130,27 +131,28 @@
       const a=points[z*(n+1)+x],b=points[z*(n+1)+x+1],c=points[(z+1)*(n+1)+x],d=points[(z+1)*(n+1)+x+1];
       if((x+z)%2){triangle(a,b,c);triangle(b,d,c)}else{triangle(a,b,d);triangle(a,d,c)}
     }
-    terrainData=new Float32Array(vertices);count=vertices.length/6;
-    gl.bindBuffer(gl.ARRAY_BUFFER,vertexBuffer);gl.bufferData(gl.ARRAY_BUFFER,terrainData,gl.STATIC_DRAW);
+    terrain.count=vertices.length/6;
+    gl.bindBuffer(gl.ARRAY_BUFFER,terrain.buffer);
+    gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(vertices),gl.STATIC_DRAW);
   }
   function makeTerrain() {
     link(`
       precision highp float;
       attribute vec3 position,faceNormal;
       uniform vec2 resolution;
-      uniform float level;
+      uniform float level,yaw,scaleFactor,riseFactor;
+      uniform vec4 placement;
       varying vec3 normal;
       varying float altitude,originalHeight;
       varying vec2 ground;
       void main(){
         float h=min(position.y,level);
-        float yaw=-.35;
         float x=position.x*cos(yaw)-position.z*sin(yaw);
         float z=position.x*sin(yaw)+position.z*cos(yaw);
         float small=step(resolution.x,600.);
-        float scale=mix(min(resolution.x*.42,resolution.y*.72),resolution.x*.59,small);
-        float rise=mix(min(resolution.y*.55,resolution.x*.34),resolution.y*.28,small);
-        vec2 center=vec2(resolution.x*mix(.72,.67,small),resolution.y*mix(.70,.37,small));
+        float scale=mix(min(resolution.x*.42,resolution.y*.72),resolution.x*.59,small)*scaleFactor;
+        float rise=mix(min(resolution.y*.55,resolution.x*.34),resolution.y*.28,small)*riseFactor;
+        vec2 center=resolution*mix(placement.xy,placement.zw,small);
         vec2 screen=center+vec2(x*scale,z*scale*.40-h*rise);
         gl_Position=vec4(screen.x/resolution.x*2.-1.,1.-screen.y/resolution.y*2.,-z*.22-h*.1,1.);
         normal=faceNormal;altitude=h;originalHeight=position.y;ground=position.xz;
@@ -160,13 +162,13 @@
       varying vec3 normal;
       varying float altitude,originalHeight;
       varying vec2 ground;
-      uniform float level;
+      uniform float level,haze;
+      uniform vec3 lowColor,highColor;
       void main(){
         float clipped=smoothstep(level-.008,level+.008,originalHeight);
         vec3 n=normalize(mix(normal,vec3(0.,1.,0.),clipped));
         float light=max(0.,dot(n,normalize(vec3(-.5,1.,.35))));
-        vec3 low=vec3(.33,.43,.40),high=vec3(.80,.80,.70);
-        vec3 color=mix(low,high,smoothstep(0.,.85,altitude));
+        vec3 color=mix(lowColor,highColor,smoothstep(0.,.85,altitude));
         color*=.57+light*.51;
         float contour=1.-smoothstep(.0,.055,abs(fract(altitude*17.)-.5));
         color=mix(color,vec3(.84,.85,.75),contour*.20*(1.-clipped));
@@ -175,34 +177,83 @@
         color+=vec3(.15,.13,.075)*rim*.48;
         float grid=(1.-smoothstep(.0,.035,abs(fract(ground.x*27.)-.5)))+(1.-smoothstep(.0,.035,abs(fract(ground.y*27.)-.5)));
         color+=vec3(.025)*grid*clipped;
+        color=mix(color,vec3(.902,.910,.875),haze);
         gl_FragColor=vec4(color,1.);
       }
     `);
-    vertexBuffer=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,vertexBuffer);
-    for(const [name,offset] of [['position',0],['faceNormal',12]]){
-      const loc=gl.getAttribLocation(program,name);gl.enableVertexAttribArray(loc);gl.vertexAttribPointer(loc,3,gl.FLOAT,false,24,offset);
-    }
+    terrainAttributes.position=gl.getAttribLocation(program,'position');
+    terrainAttributes.faceNormal=gl.getAttribLocation(program,'faceNormal');
+    gl.enableVertexAttribArray(terrainAttributes.position);
+    gl.enableVertexAttribArray(terrainAttributes.faceNormal);
     gl.enable(gl.DEPTH_TEST);gl.depthFunc(gl.LEQUAL);
-    generation=Math.floor(time/56);buildTerrain(generation);
+    // Back to front: three smaller, quieter formations surround the original.
+    // Distinct periods and offsets keep their construction stages independent.
+    terrains=[
+      {id:'distant-sage',detail:32,period:79,offset:5,seed:7,
+        placement:[.80,.29,.78,.15],scale:.48,rise:.47,yaw:-.12,haze:.43,
+        low:[.39,.49,.40],high:[.80,.83,.70]},
+      {id:'right-olive',detail:36,period:61,offset:31,seed:21,
+        placement:[1.08,.52,1.04,.46],scale:.43,rise:.58,yaw:-.68,haze:.28,
+        low:[.43,.46,.31],high:[.83,.78,.61]},
+      {id:'left-earth',detail:36,period:67,offset:24,seed:13,
+        placement:[.12,.79,.09,.64],scale:.45,rise:.48,yaw:.40,haze:.30,
+        low:[.49,.37,.27],high:[.83,.73,.57]},
+      {id:'main',detail:54,period:56,offset:0,seed:0,
+        placement:[.72,.70,.67,.37],scale:1,rise:1,yaw:-.35,haze:0,
+        low:[.33,.43,.40],high:[.80,.80,.70]}
+    ].map(terrain=>({...terrain,buffer:gl.createBuffer(),generation:-1,count:0}));
+  }
+  function terrainState(terrain) {
+    const clock=time+terrain.offset;
+    const phase=(clock%terrain.period)/terrain.period*56;
+    const smooth=x=>x*x*(3-2*x);
+    let level;
+    if(phase<23)level=smooth(phase/23);
+    else if(phase<28)level=1;
+    else if(phase<51)level=1-smooth((phase-28)/23);
+    else level=0;
+    return {generation:Math.floor(clock/terrain.period),level:.014+level*1.04,
+      phase:phase<23?'building':phase<28?'resting':phase<51?'lowering':'reconstructing'};
+  }
+  function drawTerrain(terrain,state) {
+    if(state.generation!==terrain.generation){
+      terrain.generation=state.generation;
+      buildTerrain(terrain,terrain.seed+terrain.generation);
+    }
+    gl.bindBuffer(gl.ARRAY_BUFFER,terrain.buffer);
+    gl.vertexAttribPointer(terrainAttributes.position,3,gl.FLOAT,false,24,0);
+    gl.vertexAttribPointer(terrainAttributes.faceNormal,3,gl.FLOAT,false,24,12);
+    gl.uniform1f(uniform('level'),state.level);
+    gl.uniform1f(uniform('yaw'),terrain.yaw);
+    gl.uniform1f(uniform('scaleFactor'),terrain.scale);
+    gl.uniform1f(uniform('riseFactor'),terrain.rise);
+    gl.uniform4f(uniform('placement'),...terrain.placement);
+    gl.uniform3f(uniform('lowColor'),...terrain.low);
+    gl.uniform3f(uniform('highColor'),...terrain.high);
+    gl.uniform1f(uniform('haze'),terrain.haze);
+    // Each formation has its own depth buffer; distant geometry cannot cut
+    // through the original foreground landscape when their projections overlap.
+    gl.clear(gl.DEPTH_BUFFER_BIT);
+    gl.drawArrays(gl.TRIANGLES,0,terrain.count);
   }
   function render() {
     if(!ready||document.hidden)return;
     gl.uniform2f(uniform('resolution'),width,height);
-    if(scene==='sand')gl.uniform1f(uniform('time'),time);
-    else{
-      const next=Math.floor(time/56);if(next!==generation){generation=next;buildTerrain(generation)}
-      const phase=time%56,smooth=x=>x*x*(3-2*x);
-      let level;
-      if(phase<23)level=smooth(phase/23);
-      else if(phase<28)level=1;
-      else if(phase<51)level=1-smooth((phase-28)/23);
-      else level=0;
-      level=.014+level*1.04;
-      gl.uniform1f(uniform('level'),level);
-      canvas.dataset.phase=phase<23?'building':phase<28?'resting':phase<51?'lowering':'reconstructing';
+    if(scene==='sand'){
+      gl.uniform1f(uniform('time'),time);
+      gl.drawArrays(gl.TRIANGLES,0,6);
+    }else{
       gl.clearColor(.902,.910,.875,1.);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
+      const phases=[];
+      for(const terrain of terrains){
+        const state=terrainState(terrain);
+        drawTerrain(terrain,state);
+        phases.push(`${terrain.id}:${state.phase}`);
+        if(terrain.id==='main')canvas.dataset.phase=state.phase;
+      }
+      canvas.dataset.layers=String(terrains.length);
+      canvas.dataset.layerPhases=phases.join(',');
     }
-    gl.drawArrays(gl.TRIANGLES,0,count);
   }
   function resize(){
     width=innerWidth;height=innerHeight;
