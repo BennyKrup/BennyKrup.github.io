@@ -141,6 +141,9 @@ body[data-scene="topography"] .landscape-controls { background:#f0f2eaf2; border
 
 body[data-scene="topography"] nav { background:#f0f2ebed; }
 body[data-scene="topography"] .hero-link { background:#354c41; border-color:#354c41; }
+body[data-scene="topography"] .hero-actions { align-items:flex-start; }
+.research-action { display:flex; flex-direction:column; align-items:flex-start; gap:.9rem; }
+.hero-affiliation { margin:0; padding:.35rem .85rem; border-radius:2px; background:#edf0e6db; color:#435d4b; font-size:.56rem; line-height:1.4; letter-spacing:.2em; }
 body[data-scene="topography"] .name-period { color:#789282; }
 body[data-scene="topography"] section::before { background:linear-gradient(90deg,#f2f3eb00,#f2f3ebed 10%,#f2f3ebed 65%,#f2f3eb00); }
 body[data-scene="topography"] .portrait-caption { background:#edf0e6db; color:#435d4b; }

@@ -9,8 +9,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
   <meta name="theme-color" content="#f0f0e9">
-  <link rel="stylesheet" href="assets/landscapes/landscapes.css?v=portrait-circle-5">
-  <script src="assets/landscapes/landscapes.js?v=connected-terrain-3" defer></script>
+  <link rel="stylesheet" href="assets/landscapes/landscapes.css?v=hero-cleanup-6">
+  <script src="assets/landscapes/landscapes.js?v=hero-cleanup-6" defer></script>
 </head>
 <body data-scene="topography">
   <a class="skip-link" href="#main">Skip to content</a>
@@ -36,17 +36,22 @@
       <div class="fade-in">
         <p class="hero-label">PhD Student · Ahituv Lab · UCSF</p>
       </div>
-      <h1 class="fade-in">Beniamin<br><em>Krupkin</em><span class="name-period">.</span></h1>
+      <h1 class="fade-in">Beniamin<br>Krupkin<span class="name-period">.</span></h1>
       <p class="hero-intro fade-in">
         Bioinformatics PhD student interested in transcription regulation, genomics, and genetics.
         I use deep learning models to study gene regulation in cardiac and neuronal systems
         in the context of health and disease.
       </p>
-      <div class="hero-actions fade-in"><a class="hero-link" href="#publications">Explore my research <span aria-hidden="true">↗</span></a><a class="hero-contact" href="#contact">Get in touch <span aria-hidden="true">↗</span></a></div>
+      <div class="hero-actions fade-in">
+        <div class="research-action">
+          <a class="hero-link" href="#publications">Explore my research <span aria-hidden="true">↗</span></a>
+          <p class="hero-affiliation">BIOINFORMATICS · UCSF</p>
+        </div>
+        <a class="hero-contact" href="#contact">Get in touch <span aria-hidden="true">↗</span></a>
+      </div>
     </div>
     <div class="hero-photo fade-in">
       <div class="portrait-rings"><img src="assets/landscapes/portrait-cutout.png" alt="Beniamin Krupkin" width="280" height="280"></div>
-      <p class="portrait-caption">BIOINFORMATICS · UCSF</p>
     </div>
     <a class="scroll-note" href="#about"><span aria-hidden="true">↓</span> A little about me</a>
   </header>
@@ -168,10 +173,5 @@
     <p>&copy; 2026 Beniamin Krupkin</p>
   </footer>
 
-  <div class="landscape-controls" role="group" aria-label="Background versions">
-    <a class="scene-choice" href="sand.html"><span>01</span> Sand</a>
-    <a class="scene-choice" href="topography.html" aria-current="page"><span>02</span> Topography</a>
-    <button class="motion-toggle" type="button" aria-label="Pause background animation" aria-pressed="false" hidden><span class="motion-icon" aria-hidden="true">Ⅱ</span><span class="motion-label">Pause</span></button>
-  </div>
 </body>
 </html>

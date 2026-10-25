@@ -5,7 +5,7 @@
   'use strict';
   const canvas = document.querySelector('#landscape-canvas');
   const button = document.querySelector('.motion-toggle');
-  if (!canvas || !button) return;
+  if (!canvas) return;
   const scene = document.body.dataset.scene;
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
   let paused = reduced.matches, gl, program, ready = false;
@@ -304,16 +304,18 @@
   }
   function schedule(){stop();last=performance.now();if(!paused&&!document.hidden&&ready)frame=requestAnimationFrame(animate)}
   function sync(){
+    canvas.dataset.motion=paused?'paused':'playing';
+    if(!button)return;
     button.setAttribute('aria-pressed',String(paused));button.setAttribute('aria-label',paused?'Resume background animation':'Pause background animation');
     button.querySelector('.motion-label').textContent=paused?'Resume':'Pause';
-    button.querySelector('.motion-icon').textContent=paused?'▷':'Ⅱ';canvas.dataset.motion=paused?'paused':'playing';
+    button.querySelector('.motion-icon').textContent=paused?'▷':'Ⅱ';
   }
-  button.addEventListener('click',()=>{paused=!paused;sync();schedule()});
+  button?.addEventListener('click',()=>{paused=!paused;sync();schedule()});
   reduced.addEventListener('change',event=>{paused=event.matches;sync();schedule()});
   document.addEventListener('visibilitychange',()=>{render();schedule()});
   let resizeFrame=0;
   addEventListener('resize',()=>{if(resizeFrame)cancelAnimationFrame(resizeFrame);resizeFrame=requestAnimationFrame(()=>{resizeFrame=0;resize()})});
-  function fallback(){ready=false;stop();canvas.hidden=true;button.hidden=true;canvas.dataset.renderer='static';}
+  function fallback(){ready=false;stop();canvas.hidden=true;if(button)button.hidden=true;canvas.dataset.renderer='static';}
   let sandImage;
   async function start(){
     try{
@@ -324,7 +326,7 @@
         if(!sandImage){sandImage=new Image();sandImage.src=new URL('assets/landscapes/sand-reference.png',document.baseURI).href;await sandImage.decode()}
         makeSand(sandImage);
       }else makeTerrain();
-      ready=true;canvas.hidden=false;button.hidden=false;canvas.dataset.renderer='webgl';resize();sync();schedule();
+      ready=true;canvas.hidden=false;if(button)button.hidden=false;canvas.dataset.renderer='webgl';resize();sync();schedule();
     }catch(error){console.warn("Landscape effect unavailable:",error);fallback()}
   }
   canvas.addEventListener('webglcontextlost',event=>{event.preventDefault();fallback()});
